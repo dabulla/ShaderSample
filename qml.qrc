@@ -1,5 +1,8 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>shader/pointcloud.frag</file>
+        <file>shader/pointcloud.vert</file>
+        <file>ShaderUniformDelegate.qml</file>
     </qresource>
 </RCC>
