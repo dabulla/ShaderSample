@@ -6,6 +6,7 @@ import Qt3D.Extras 2.0
 import QtQuick.Scene3D 2.0
 import QtQuick.Layouts 1.1
 import QtQuick.Controls 1.4
+import QtQml 2.2
 
 import fhac 1.0
 
@@ -26,7 +27,11 @@ Item {
                 Layout.fillHeight: true
                 model: ShaderModel {
                     id: shaderModel
-                    shaderProgram: shaderProg
+                    shaderProgram: ShaderProgram {
+                        id: shaderProg
+                        vertexShaderCode: loadSource("qrc:/shader/pointcloud.vert")
+                        fragmentShaderCode: loadSource("qrc:/shader/pointcloud.frag")
+                    }
                 }
 
                 rowDelegate: Rectangle {
@@ -74,14 +79,30 @@ Item {
             }
         }
         ShaderUniformDelegate {
+            property var params
             id: delegateManager
-            target: renderPass1
-            parametersProperty: "parameters"
+            target: delegateManager
+            parametersProperty: "params"
+            onParametersChanging: {
+                sceneParent.children = ""
+            }
+
+            onParametersChangedFinished: {
+                sceneCompo.createObject(sceneParent, {parameters:params})
+            }
         }
-        Scene3D {
-            id: scene3d
+        Item {
+            id:sceneParent
             Layout.fillHeight: true
             Layout.minimumWidth: 50
+        }
+
+        Component {
+            id: sceneCompo
+        Scene3D {
+            property var parameters
+            anchors.fill: parent
+            id: scene3d
             focus: true
             aspects: ["input", "logic"]
             cameraAspectRatioMode: Scene3D.AutomaticAspectRatio
@@ -156,15 +177,43 @@ Item {
 //                                    majorVersion: 3
 //                                    minorVersion: 1
 //                                }
+                                property var params: []
+                                Instantiator {
+                                    id: parameterInstantiator
+                                    property int numberOfEditableParameters: scene3d.parameters.length
+                                    Parameter {
+                                        name: scene3d.parameters[index].name
+                                        value: scene3d.parameters[index].value
+                                    }
+                                    onObjectAdded: {
+                                        console.log("dbg " + object.name + " " + object.value)
+                                        technique1.params.push(object)
+                                    }
+                                }
+                                Component.onCompleted: {
+                                    var renderPassObj = renderPassCompo.createObject(technique1, {parameters:technique1.params})
+                                    console.log("instantiated" + renderPassObj.parameters.length);
+                                    technique1.renderPasses.push(renderPassObj)
+                                }
 
-                                renderPasses: [
-                                    RenderPass {
-                                        id: renderPass1
-                                        parameters: [ Parameter { name:"theColor"; value:0.5 } ]
-                                        shaderProgram: ShaderProgram {
-                                            id: shaderProg
-                                            vertexShaderCode: loadSource("qrc:/shader/pointcloud.vert")
-                                            fragmentShaderCode: loadSource("qrc:/shader/pointcloud.frag")
+                                Component {
+                                    id: renderPassCompo
+                                RenderPass {
+                                    id: renderPass1
+//                                        Component.onCompleted: {
+//                                            technique1.renderPasses.push(renderPass1)
+////                                            for(var k=0; k< scene3d.parameters.length ; ++k) {
+////                                                console.log("DBG" + k)
+////                                                renderPass1.parameters.push(scene3d.parameters[k])
+////                                            }
+//                                        }
+
+                                    //parameters: []
+//                                        parameters: parameterInstantiator//[ Parameter { name:"theColor"; value:0.5 } ]
+                                    shaderProgram: ShaderProgram {
+                                        id: shaderProg
+                                        vertexShaderCode: loadSource("qrc:/shader/pointcloud.vert")
+                                        fragmentShaderCode: loadSource("qrc:/shader/pointcloud.frag")
 //                                            vertexShaderCode: "#version 150 core" + "\n" +
 //                                            "in vec3 vertexPosition;" + "\n" +
 //                                            "out vec3 worldPosition;" + "\n" +
@@ -189,11 +238,14 @@ Item {
 //                                            "    //output color from material" + "\n" +
 //                                            "    fragColor = vec4(1.0);" + "\n" +
 //                                            "}"
-                                        }
-                                        renderStates: [
-                                            DepthTest { depthFunction: DepthTest.Less }
-                                        ]
                                     }
+                                    renderStates: [
+                                        DepthTest { depthFunction: DepthTest.Less }
+                                    ]
+                                }
+                                }
+                                renderPasses: [
+
                                 ]
                             }
                         ]
@@ -296,6 +348,7 @@ Item {
                     id: phong
                 }
             }
+        }
         }
     }
 }

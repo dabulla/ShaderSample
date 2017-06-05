@@ -11,6 +11,8 @@ Item {
     property var target
     property string parametersProperty: "parameters"
 
+    signal parametersChanging()
+    signal parametersChangedFinished()
     Item {
         id: priv
         Instantiator {
@@ -31,6 +33,7 @@ Item {
         function setParameter(name, value) {
             if( isNaN(value)) return
             if( value === undefined) return
+            var listChanged = false
             var found = false
             for (var i in root.parameters) {
                 if ( root.parameters[i].initialized
@@ -42,6 +45,7 @@ Item {
                 }
             }
             if (!found) {
+                listChanged = true
                 parameterInstantiator.numberOfEditableParameters++;
                 found = false
                 for (var i in root.parameters) {
@@ -59,11 +63,17 @@ Item {
                     console.log("Error, could not add param")
                 }
             }
-            console.log("DBG: before");
+            if(listChanged) {
+                console.log("DBG: before");
+                root.parametersChanging();
+            }
             root.target[root.parametersProperty] = [];
             console.log("DBG: 1");
             root.target[root.parametersProperty] = root.parameters;
-            console.log("DBG: 2");
+            if(listChanged) {
+                console.log("DBG: 2");
+                root.parametersChangedFinished();
+            }
         }
     }
 
