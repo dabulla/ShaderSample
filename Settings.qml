@@ -7,6 +7,11 @@ import Qt.labs.settings 1.0 as Labs
 Dialog {
     width: 800
     readonly property var settings: settings
+    property alias vertexShader: settings.vertexShaderFilename
+    property alias geometryShader: settings.geometryShaderFilename
+    property alias tesselationControlShader: settings.tesselationControlShaderFilename
+    property alias tesselationEvaluationShader: settings.tesselationEvaluationShaderFilename
+    property alias fragmentShader: settings.fragmentShaderFilename
     Labs.Settings {
         id: settings
         property alias vertexShaderFilename: vsTf.text
@@ -19,31 +24,31 @@ Dialog {
     FileDialog {
         id: vertexShaderFiledialog
         nameFilters: [ "GLSL files (*.glsl)", "GLSL Vertexshader files (*.vs *.vert)", "All files (*)"]
-        onFileUrlChanged: vsTf.text = fileUrl
+        onFileUrlChanged: vsTf.text = fileUrl.toString().replace("file://", "")
         folder: vsTf.text
     }
     FileDialog {
         id: geometryShaderFiledialog
         nameFilters: [ "GLSL files (*.glsl)", "GLSL Fragmentshader files (*.gs *.geom)", "All files (*)"]
-        onFileUrlChanged: gsTf.text = fileUrl
+        onFileUrlChanged: gsTf.text = fileUrl.toString().replace("file://", "")
         folder: gsTf.text
     }
     FileDialog {
         id: tcsShaderFiledialog
         nameFilters: [ "GLSL files (*.glsl)", "GLSL Fragmentshader files (*.tcs)", "All files (*)"]
-        onFileUrlChanged: tcsTf.text = fileUrl
+        onFileUrlChanged: tcsTf.text = fileUrl.toString().replace("file://", "")
         folder: tcsTf.text
     }
     FileDialog {
         id: tesShaderFiledialog
         nameFilters: [ "GLSL files (*.glsl)", "GLSL Fragmentshader files (*.tes)", "All files (*)"]
-        onFileUrlChanged: tesTf.text = fileUrl
+        onFileUrlChanged: tesTf.text = fileUrl.toString().replace("file://", "")
         folder: tesTf.text
     }
     FileDialog {
         id: fragmentShaderFiledialog
         nameFilters: [ "GLSL files (*.glsl)", "GLSL Fragmentshader files (*.fs *.frag)", "All files (*)"]
-        onFileUrlChanged: fsTf.text = fileUrl
+        onFileUrlChanged: fsTf.text = fileUrl.toString().replace("file://", "")
         folder: fsTf.text
     }
 

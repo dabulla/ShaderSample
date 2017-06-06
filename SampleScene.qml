@@ -11,7 +11,10 @@ import QtQml 2.2
 import fhac 1.0
 
 Scene3D {
-    property alias shaderProgram: renderPass1.shaderProgram
+    property var vertexShader
+    property var fragmentShader
+    // must be available to update parameters
+    property alias parameters: renderPass1.parameters
     anchors.fill: parent
     id: scene3d
     focus: true
@@ -87,11 +90,11 @@ Scene3D {
                         renderPasses: [ RenderPass {
                             id: renderPass1
                             /*${PARAMETERS}*/
-//                            shaderProgram: ShaderProgram {
-//                                id: shaderProg
-//                                vertexShaderCode: loadSource("qrc:/shader/pointcloud.vert")
-//                                fragmentShaderCode: loadSource("qrc:/shader/pointcloud.frag")
-//                            }
+                            shaderProgram: ShaderProgram {
+                                id: shaderProg
+                                vertexShaderCode: loadSource(scene3d.vertexShader)
+                                fragmentShaderCode: loadSource(scene3d.fragmentShader)
+                            }
                             renderStates: [
                                 DepthTest { depthFunction: DepthTest.Less }
                             ]

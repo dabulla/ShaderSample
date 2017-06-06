@@ -22,6 +22,8 @@ Item {
                     text: "Settings"
                     Settings {
                         id: settings
+                        onVertexShaderChanged: delegateManager.updateShader(vertexShader, fragmentShader)
+                        onFragmentShaderChanged: delegateManager.updateShader(vertexShader, fragmentShader)
                     }
                     onClicked: settings.open()
                 }
@@ -39,19 +41,11 @@ Item {
                 id: treeViewShaderVariables
                 model: ShaderModel {
                     id: shaderModel
-                    shaderProgram: ShaderProgram {
-                        id: shaderProg
-                        vertexShaderCode: loadSource(settings.settings.vertexShaderFilename)
-                        onVertexShaderCodeChanged: shaderModel.syncModel()
-                        geometryShaderCode: loadSource(settings.settings.geometryShaderFilename)
-                        onGeometryShaderCodeChanged: shaderModel.syncModel()
-                        tessellationControlShaderCode: loadSource(settings.settings.tesselationControlShaderFilename)
-                        onTessellationControlShaderCodeChanged: shaderModel.syncModel()
-                        tessellationEvaluationShaderCode: loadSource(settings.settings.tesselationEvaluationShaderFilename)
-                        onTessellationEvaluationShaderCodeChanged: shaderModel.syncModel()
-                        fragmentShaderCode: loadSource(settings.settings.fragmentShaderFilename)
-                        onFragmentShaderCodeChanged: shaderModel.syncModel()
-                    }
+                    vertexShader: settings.settings.vertexShaderFilename
+                    geometryShader: settings.settings.geometryShaderFilename
+                    tesselationControlShader: settings.settings.tesselationControlShaderFilename
+                    tesselationEvaluationShader: settings.settings.tesselationEvaluationShaderFilename
+                    fragmentShader: settings.settings.fragmentShaderFilename
                 }
 
                 rowDelegate: Rectangle {
@@ -114,6 +108,12 @@ Item {
                 property var params: []
                 property var currentScene
                 id: delegateManager
+                function updateShader(vs, fs) {
+                    //TODO all shaders
+                    currentScene.vertexShader = vs
+                    currentScene.fragmentShader = fs
+                }
+
                 onParameterChange: {
                     if(currentScene) {
                         for (var i in currentScene.parameters) {
@@ -132,12 +132,12 @@ Item {
                     }
                     paramsString += "Parameter { name:\"" + parameters[parameters.length-1].name + "\"; value: " + parameters[i].initialValueAsText + " }]"
                     var sampleSceneWithParams = sceneTemplate.replace("/*${PARAMETERS}*/", paramsString)
-                    delegateManager.currentScene = Qt.createQmlObject(sampleSceneWithParams, sceneParent)//, {"shaderProgram":shaderModel.shaderProgram})
+                    delegateManager.currentScene = Qt.createQmlObject(sampleSceneWithParams, sceneParent, {"vertexShader":shaderModel.vertexShader, "fragmentShader": shaderModel.fragmentShader})
                 }
             }
         }
         Item {
-            id:sceneParent
+            id: sceneParent
             Layout.fillHeight: true
             Layout.minimumWidth: 50
         }

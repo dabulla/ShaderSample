@@ -88,6 +88,7 @@ Item {
                 root.parameterAddedOrRemoved()
             } else {
                 root.parameterChange(name, value)
+                console.log("DBG: please " + name + " " + value)
             }
         }
     }
