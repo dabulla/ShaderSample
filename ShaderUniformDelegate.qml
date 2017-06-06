@@ -63,7 +63,8 @@ Item {
                             valueAsText =  value
                             break;
                         case "int":
-                            valueAsText =  value
+                            valueAsText =  value.toFixed(0)
+                            console.log("DBG: " + valueAsText)
                             break;
                         case "bool":
                             valueAsText =  value
@@ -88,7 +89,6 @@ Item {
                 root.parameterAddedOrRemoved()
             } else {
                 root.parameterChange(name, value)
-                console.log("DBG: please " + name + " " + value)
             }
         }
     }
@@ -97,6 +97,7 @@ Item {
         id: autoSelectComponent
         Item {
             anchors.fill: parent
+            anchors.margins: 3
             id: item
             clip: true
             Component.onCompleted: {
@@ -183,7 +184,8 @@ Item {
     Component {
         id: defaultFloatSlider
         MinMaxSlider {
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
             property string name
             property string qmlTypename
             Component.onCompleted: priv.setParameter(name, value, qmlTypename);
@@ -194,6 +196,8 @@ Item {
     Component {
         id: defaultVec2Control
         ColumnLayout {
+            anchors.left: parent.left
+            anchors.right: parent.right
             id: comp
             property string name
             property bool isInt
@@ -204,6 +208,7 @@ Item {
                                                     valueSlidery.value), qmlTypename);
             }
             MinMaxSlider {
+                Layout.fillWidth: true
                 id: valueSliderx
                 isInt: comp.isInt
                 minMaxEditable: false
@@ -212,6 +217,7 @@ Item {
                 onValueChanged: updateUniform()
             }
             MinMaxSlider {
+                Layout.fillWidth: true
                 id: valueSlidery
                 isInt: comp.isInt
                 onValueChanged: updateUniform()
@@ -244,6 +250,7 @@ Item {
                 onValueChanged: updateUniform()
             }
             MinMaxSlider {
+                Layout.fillWidth: true
                 id:valueSlidery
                 isInt: comp.isInt
                 minMaxEditable: false
@@ -252,6 +259,7 @@ Item {
                 onValueChanged: updateUniform()
             }
             MinMaxSlider {
+                Layout.fillWidth: true
                 id:valueSliderz
                 isInt: comp.isInt
                 onValueChanged: updateUniform()
@@ -261,6 +269,8 @@ Item {
     Component {
         id:defaultVec4Control
         ColumnLayout {
+            anchors.left: parent.left
+            anchors.right: parent.right
             id: comp
             property string name
             property bool isInt
@@ -273,6 +283,7 @@ Item {
                                                     valueSliderw.value), qmlTypename);
             }
             MinMaxSlider {
+                Layout.fillWidth: true
                 id:valueSliderx
                 isInt: comp.isInt
                 minMaxEditable: false
@@ -281,6 +292,7 @@ Item {
                 onValueChanged: updateUniform()
             }
             MinMaxSlider {
+                Layout.fillWidth: true
                 id:valueSlidery
                 isInt: comp.isInt
                 minMaxEditable: false
@@ -289,6 +301,7 @@ Item {
                 onValueChanged: updateUniform()
             }
             MinMaxSlider {
+                Layout.fillWidth: true
                 id:valueSliderz
                 isInt: comp.isInt
                 minMaxEditable: false
@@ -297,6 +310,7 @@ Item {
                 onValueChanged: updateUniform()
             }
             MinMaxSlider {
+                Layout.fillWidth: true
                 id:valueSliderw
                 isInt: comp.isInt
                 onValueChanged: updateUniform()

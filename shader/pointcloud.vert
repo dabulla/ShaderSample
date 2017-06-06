@@ -16,7 +16,7 @@ uniform mat4 projectionMatrix;
 uniform mat4 viewportMatrix;
 
 uniform float theColorMulti;
-uniform vec3 theColor;
+uniform vec3 theColorSuper;
 uniform bool negative;
 uniform int mode;
 uniform vec2 vector2;
@@ -27,26 +27,26 @@ void main()
     gl_Position = mvp * vec4(vertexPosition, 1.0);
     normal = normalize(modelViewNormal * vertexNormal);
     position = vec3(modelView * vec4(vertexPosition, 1.0));
-//    float multi = theColorMulti;
-//    if(negative) multi = 1.0-multi;
-//    vec3 modeColor = vec3(theColorMulti);
-//    if(mode == 0)
-//    {
-//        modeColor = theColor;
-//    }
-//    else if(mode == 1)
-//    {
-//        modeColor = vec3(theColor.r+theColor.g+theColor.b)*0.333;
-//    }
-//    else if(mode == 2)
-//    {
-//        modeColor.rg = vector2.rg;
-//        modeColor.b = vector2.r;
-//    }
-//    else if(mode == 3)
-//    {
-//        modeColor.rgb = vector4.rgb;
-//        modeColor.rgb *= vector4.a;
-//    }
-    color = theColor;// * multi;
+    float multi = theColorMulti;
+    if(negative) multi = 1.0-multi;
+    vec3 modeColor = vec3(theColorMulti);
+    if(mode == 0)
+    {
+        modeColor = theColorSuper;
+    }
+    else if(mode == 1)
+    {
+        modeColor = theColorSuper*0.333;
+    }
+    else if(mode == 2)
+    {
+        modeColor.rg = vector2.rg;
+        modeColor.b = vector2.r;
+    }
+    else if(mode == 3)
+    {
+        modeColor.rgb = vector4.rgb;
+        modeColor.rgb *= vector4.a;
+    }
+    color = modeColor * multi;
 }

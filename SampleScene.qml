@@ -11,8 +11,9 @@ import QtQml 2.2
 import fhac 1.0
 
 Scene3D {
-    property var vertexShader
-    property var fragmentShader
+    // "C:/develop/ShaderSample/shader/pointcloud.frag"
+    property string vertexShader
+    property string fragmentShader
     // must be available to update parameters
     property alias parameters: renderPass1.parameters
     anchors.fill: parent
@@ -92,8 +93,12 @@ Scene3D {
                             /*${PARAMETERS}*/
                             shaderProgram: ShaderProgram {
                                 id: shaderProg
-                                vertexShaderCode: loadSource(scene3d.vertexShader)
-                                fragmentShaderCode: loadSource(scene3d.fragmentShader)
+                                vertexShaderCode: Helper.readFile(/*${VS}*/)
+                                fragmentShaderCode: Helper.readFile(/*${FS}*/)
+                                geometryShaderCode: Helper.readFile(/*${GS}*/)
+                                tessellationControlShaderCode: Helper.readFile(/*${TCS}*/)
+                                tessellationEvaluationShaderCode: Helper.readFile(/*${TES}*/)
+                                computeShaderCode: Helper.readFile(/*${CS}*/)
                             }
                             renderStates: [
                                 DepthTest { depthFunction: DepthTest.Less }

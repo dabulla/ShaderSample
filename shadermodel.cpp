@@ -7,6 +7,7 @@
 
 #include <QOpenGLDebugLogger>
 #include <QOffscreenSurface>
+#include <QFile>
 
 void onMessageLogged(QOpenGLDebugMessage message)
 {
@@ -14,6 +15,7 @@ void onMessageLogged(QOpenGLDebugMessage message)
 }
 
 ShaderModel::ShaderModel()
+    : m_isValid(false)
 {
     m_roleNameMapping[ParameterName] = "name";
     m_roleNameMapping[ParameterType] = "type";
@@ -33,6 +35,7 @@ ShaderModel::ShaderModel(const ShaderModel &other)
     , m_tesselationEvaluationShader(other.m_tesselationEvaluationShader)
     , m_fragmentShader(other.m_fragmentShader)
     , m_computeShader(other.m_computeShader)
+    , m_isValid( false )
 {
     m_roleNameMapping[ParameterName] = "name";
     m_roleNameMapping[ParameterType] = "type";
@@ -44,10 +47,14 @@ ShaderModel::ShaderModel(const ShaderModel &other)
 
 void ShaderModel::syncModel()
 {
+    m_isValid = false;
     if(m_vertexShader.length() == 0 || m_fragmentShader.length() == 0) return;
     QOpenGLDebugLogger logger;
 
     QOpenGLContext glContext;
+    QSurfaceFormat fmt = glContext.format();
+    fmt.setOption(QSurfaceFormat::DebugContext);
+    glContext.setFormat(fmt);
     glContext.create();
     QOffscreenSurface dummySurface;
     dummySurface.create();
@@ -80,28 +87,34 @@ void ShaderModel::syncModel()
     shaderProgram.create();
     if ( !shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, m_vertexShader ) ) {
         qCritical() << QObject::tr( "Could not compile vertex shader. Log:" ) << shaderProgram.log();
+        return;
     }
     if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::Fragment, m_fragmentShader ) ) {
         qCritical() << QObject::tr( "Could not compile fragment shader. Log:" ) << shaderProgram.log();
+        return;
     }
     if(m_geometryShader.size() != 0) {
         if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::Geometry, m_geometryShader ) ) {
             qCritical() << QObject::tr( "Could not compile geometry shader. Log:" ) << shaderProgram.log();
+            return;
         }
     }
     if(m_tesselationControlShader.size() != 0) {
         if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::TessellationControl, m_tesselationControlShader ) ) {
             qCritical() << QObject::tr( "Could not compile vertex tessellation control. Log:" ) << shaderProgram.log();
+            return;
         }
     }
     if(m_tesselationEvaluationShader.size() != 0) {
         if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::TessellationEvaluation, m_tesselationEvaluationShader ) ) {
             qCritical() << QObject::tr( "Could not compile vertex tessellation evaluation. Log:" ) << shaderProgram.log();
+            return;
         }
     }
     if(m_computeShader.size() != 0) {
         if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::Compute, m_computeShader ) ) {
             qCritical() << QObject::tr( "Could not compile compute shader. Log:" ) << shaderProgram.log();
+            return;
         }
     }
 
@@ -163,6 +176,7 @@ void ShaderModel::syncModel()
     }
     shaderProgram.release();
     dummySurface.destroy();
+    m_isValid = true;
 }
 
 QStringList ShaderModel::blacklist() const
@@ -198,6 +212,11 @@ QString ShaderModel::fragmentShader() const
 QString ShaderModel::computeShader() const
 {
     return m_computeShader;
+}
+
+bool ShaderModel::isValid() const
+{
+    return m_isValid;
 }
 
 void ShaderModel::setBlacklist(QStringList blacklist)

@@ -12,8 +12,8 @@ ColumnLayout {
     Slider {
         Layout.fillWidth: true
         id: valueSlider
-        minimumValue: parseFloat(minVal.text)
-        maximumValue: parseFloat(maxVal.text)
+        minimumValue: comp.isInt ? parseInt(minVal.text) : parseFloat(minVal.text)
+        maximumValue: comp.isInt ? parseInt(maxVal.text) : parseFloat(maxVal.text)
         stepSize: isInt ? 1.0 : 0.0
     }
     RowLayout {
@@ -22,10 +22,14 @@ ColumnLayout {
         Label {
             text: "Min:"
         }
+        IntValidator { id: intValidatorMin }
+        DoubleValidator { id: doubleValidatorMin }
+        IntValidator { id: intValidatorMax }
+        DoubleValidator { id: doubleValidatorMax }
         TextField {
             id: minVal
             text: "0"
-            validator: DoubleValidator {}
+            validator: comp.isInt ? intValidatorMin : doubleValidatorMin
             Layout.fillWidth: true
             Layout.maximumWidth: 60
             Layout.minimumWidth: 10
@@ -36,7 +40,7 @@ ColumnLayout {
         TextField {
             id: maxVal
             text: "1"
-            validator: DoubleValidator {}
+            validator: comp.isInt ? intValidatorMax : doubleValidatorMax
             Layout.fillWidth: true
             Layout.maximumWidth: 60
             Layout.minimumWidth: 10

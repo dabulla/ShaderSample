@@ -17,6 +17,7 @@ class ShaderModel : public QStandardItemModel
     Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader NOTIFY fragmentShaderChanged)
     Q_PROPERTY(QString computeShader READ computeShader WRITE setComputeShader NOTIFY computeShaderChanged)
     Q_PROPERTY(QStringList blacklist READ blacklist WRITE setBlacklist NOTIFY blacklistChanged)
+    Q_PROPERTY(bool isValid READ isValid NOTIFY isValidChanged)
 public:
     enum ShaderParameterRoles {
         ParameterName = Qt::DisplayRole,
@@ -40,6 +41,7 @@ public:
     QString tesselationEvaluationShader() const;
     QString fragmentShader() const;
     QString computeShader() const;
+    bool isValid() const;
 
 public Q_SLOTS:
     void setBlacklist(QStringList blacklist);
@@ -59,6 +61,7 @@ Q_SIGNALS:
     void tesselationEvaluationShaderChanged(QString tesselationEvaluationShader);
     void fragmentShaderChanged(QString fragmentShader);
     void computeShaderChanged(QString computeShader);
+    void isValidChanged(bool isValid);
 
 private:
     QHash<int, QByteArray> m_roleNameMapping;
@@ -70,6 +73,7 @@ private:
     QString m_tesselationEvaluationShader;
     QString m_fragmentShader;
     QString m_computeShader;
+    bool m_isValid;
 };
 
 Q_DECLARE_METATYPE(ShaderModel)

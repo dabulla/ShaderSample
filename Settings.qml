@@ -7,13 +7,14 @@ import Qt.labs.settings 1.0 as Labs
 Dialog {
     width: 800
     readonly property var settings: settings
-    property alias vertexShader: settings.vertexShaderFilename
-    property alias geometryShader: settings.geometryShaderFilename
-    property alias tesselationControlShader: settings.tesselationControlShaderFilename
-    property alias tesselationEvaluationShader: settings.tesselationEvaluationShaderFilename
-    property alias fragmentShader: settings.fragmentShaderFilename
+    readonly property string vertexShader: settings.vertexShaderFilename
+    readonly property string geometryShader: settings.geometryShaderFilename
+    readonly property string tesselationControlShader: settings.tesselationControlShaderFilename
+    readonly property string tesselationEvaluationShader: settings.tesselationEvaluationShaderFilename
+    readonly property string fragmentShader: settings.fragmentShaderFilename
     Labs.Settings {
         id: settings
+        category: "shader_filenames"
         property alias vertexShaderFilename: vsTf.text
         property alias geometryShaderFilename: gsTf.text
         property alias tesselationControlShaderFilename: tcsTf.text

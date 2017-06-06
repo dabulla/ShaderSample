@@ -15,6 +15,9 @@ QObject *provider(QQmlEngine *engine, QJSEngine *scriptEngine)
 int main(int argc, char **argv)
 {
     QGuiApplication app(argc, argv);
+    app.setOrganizationName("FH Aachen - University of Applied Sciences");
+    app.setOrganizationDomain("fh-aachen.de");
+    app.setApplicationName("Shader Inspector");
 
     QQuickView view;
     qmlRegisterType<ShaderModel>("fhac", 1, 0, "ShaderModel");

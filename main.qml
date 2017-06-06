@@ -39,6 +39,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 id: treeViewShaderVariables
+                horizontalScrollBarPolicy: Qt.ScrollBarAlwaysOff
                 model: ShaderModel {
                     id: shaderModel
                     vertexShader: settings.settings.vertexShaderFilename
@@ -96,11 +97,10 @@ Item {
                     role: "data"
                     title: "data"
                     resizable: false
-                    width: treeViewShaderVariables.width
+                    width: treeViewShaderVariables.contentItem.width
                            - colName.width
                            - colType.width
                            - colDatatype.width
-                           - 3
                     delegate: delegateManager.autoSelectComponent
                 }
             }
@@ -109,9 +109,10 @@ Item {
                 property var currentScene
                 id: delegateManager
                 function updateShader(vs, fs) {
-                    //TODO all shaders
-                    currentScene.vertexShader = vs
-                    currentScene.fragmentShader = fs
+                    delegateManager.reloadScene()
+//                    //setting shaders here will cause Qt3D 5.9 to crash
+//                    currentScene.vertexShader = vs
+//                    currentScene.fragmentShader = fs
                 }
 
                 onParameterChange: {
@@ -119,20 +120,46 @@ Item {
                         for (var i in currentScene.parameters) {
                             if ( currentScene.parameters[i].name === name ) {
                                 currentScene.parameters[i].value = value
+                                console.log("DBG: set " + name + " = " + value)
                             }
                         }
                     }
                 }
-
-                onParameterAddedOrRemoved: {
+                function reloadScene() {
+                    if(!shaderModel.isValid) return
                     sceneParent.children = ""
                     var paramsString = "parameters: ["
                     for(var i=0 ; i < parameters.length-1 ; i++) {
                         paramsString += "Parameter { name:\"" + parameters[i].name + "\"; value: " + parameters[i].initialValueAsText + " },"
                     }
-                    paramsString += "Parameter { name:\"" + parameters[parameters.length-1].name + "\"; value: " + parameters[i].initialValueAsText + " }]"
+                    if(parameters.length > 0) {
+                        paramsString += "Parameter { name:\"" + parameters[parameters.length-1].name + "\"; value: " + parameters[i].initialValueAsText + " }]"
+                    } else {
+                        paramsString += "]"
+                    }
+
+                    // Currently Scene3D/Qt3D must know all shader/shadeparameter at startup.
                     var sampleSceneWithParams = sceneTemplate.replace("/*${PARAMETERS}*/", paramsString)
-                    delegateManager.currentScene = Qt.createQmlObject(sampleSceneWithParams, sceneParent, {"vertexShader":shaderModel.vertexShader, "fragmentShader": shaderModel.fragmentShader})
+                    sampleSceneWithParams = sampleSceneWithParams.replace("/*${VS}*/", "\"" + shaderModel.vertexShader + "\"")
+                    sampleSceneWithParams = sampleSceneWithParams.replace("/*${FS}*/", "\"" + shaderModel.fragmentShader + "\"")
+                    if(shaderModel.geometryShader.length != 0) {
+                        sampleSceneWithParams = sampleSceneWithParams.replace("/*${GS}*/", "\"" + shaderModel.geometryShader + "\"")
+                    }
+                    if(shaderModel.tesselationControlShader.length != 0) {
+                        sampleSceneWithParams = sampleSceneWithParams.replace("/*${TCS}*/", "\"" + shaderModel.tesselationControlShader + "\"")
+                    }
+                    if(shaderModel.tesselationEvaluationShader.length != 0) {
+                        sampleSceneWithParams = sampleSceneWithParams.replace("/*${TES}*/", "\"" + shaderModel.tesselationEvaluationShader + "\"")
+                    }
+                    if(shaderModel.computeShader.length != 0) {
+                        sampleSceneWithParams = sampleSceneWithParams.replace("/*${CS}*/", "\"" + shaderModel.computeShader + "\"")
+                    }
+
+                    delegateManager.currentScene = Qt.createQmlObject(sampleSceneWithParams, sceneParent)//, {"vertexShader":shaderModel.vertexShader, "fragmentShader": shaderModel.fragmentShader})
+                }
+
+                onParameterAddedOrRemoved: {
+                    reloadScene()
                 }
             }
         }
