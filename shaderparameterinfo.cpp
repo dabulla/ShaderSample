@@ -56,7 +56,7 @@ ShaderParameterInfo::ShaderParameterInfo(const ShaderParameterInfo &other)
 {
 }
 
-QVariant::Type ShaderParameterInfo::fromGLDatatype(ShaderParameterDatatype type)
+QVariant::Type ShaderParameterInfo::fromGLDatatype(ShaderParameterDatatype type) const
 {
     switch(type)
     {
@@ -193,6 +193,11 @@ QVariant::Type ShaderParameterInfo::fromGLDatatype(ShaderParameterDatatype type)
     }
 }
 
+QString ShaderParameterInfo::qmlTypename() const
+{
+    return QString::fromLatin1(QVariant::typeToName(fromGLDatatype(m_datatype)));
+}
+
 void ShaderParameterInfo::setName(QString name)
 {
     if (m_name == name)
@@ -209,6 +214,7 @@ void ShaderParameterInfo::setType(ShaderParameterInfo::ShaderParameterType type)
 
     m_type = type;
     emit typeChanged(m_type);
+    emit qmlTypenameChanged(qmlTypename());
 }
 
 void ShaderParameterInfo::setDatatype(ShaderParameterDatatype datatype)

@@ -4,5 +4,7 @@
         <file>shader/pointcloud.frag</file>
         <file>shader/pointcloud.vert</file>
         <file>ShaderUniformDelegate.qml</file>
+        <file>SampleScene.qml</file>
+        <file>MinMaxSlider.qml</file>
     </qresource>
 </RCC>

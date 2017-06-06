@@ -13,7 +13,6 @@ class ShaderModel : public QStandardItemModel
     Q_OBJECT
     Q_PROPERTY(Qt3DRender::QShaderProgram *shaderProgram READ shaderProgram WRITE setShaderProgram NOTIFY shaderProgramChanged)
     Q_PROPERTY(QStringList blacklist READ blacklist WRITE setBlacklist NOTIFY blacklistChanged)
-
 public:
     enum ShaderParameterRoles {
         ParameterName = Qt::DisplayRole,
@@ -23,10 +22,12 @@ public:
         ParameterUniformLocation = Qt::UserRole + 2,
         ParameterIsSubroutine = Qt::UserRole + 3,
         ParameterSubroutineValues = Qt::UserRole + 4,
-        ParameterData = Qt::UserRole + 5
+        ParameterData = Qt::UserRole + 5 // This is used for creation of ui elements
     };
+    Q_ENUM(ShaderParameterRoles)
 
     ShaderModel();
+    ShaderModel(const ShaderModel &other);
     Qt3DRender::QShaderProgram *shaderProgram() const;
     Q_INVOKABLE void syncModel();
     QStringList blacklist() const;
@@ -45,5 +46,8 @@ private:
     QStringList m_blacklist;
     QHash<QString, ShaderParameterInfo*> m_parameters;
 };
+
+Q_DECLARE_METATYPE(ShaderModel)
+Q_DECLARE_METATYPE(ShaderModel::ShaderParameterRoles)
 
 #endif // SHADERMODEL_H

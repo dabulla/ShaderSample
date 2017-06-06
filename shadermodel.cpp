@@ -22,7 +22,17 @@ ShaderModel::ShaderModel()
     m_roleNameMapping[ParameterValue] = "value";
     m_roleNameMapping[ParameterUniformLocation] = "location";
     m_roleNameMapping[ParameterData] = "data";
+}
 
+ShaderModel::ShaderModel(const ShaderModel &other)
+    : m_shaderProgram(other.m_shaderProgram)
+{
+    m_roleNameMapping[ParameterName] = "name";
+    m_roleNameMapping[ParameterType] = "type";
+    m_roleNameMapping[ParameterDatatype] = "datatype";
+    m_roleNameMapping[ParameterValue] = "value";
+    m_roleNameMapping[ParameterUniformLocation] = "location";
+    m_roleNameMapping[ParameterData] = "data";
 }
 
 Qt3DRender::QShaderProgram *ShaderModel::shaderProgram() const
@@ -32,6 +42,7 @@ Qt3DRender::QShaderProgram *ShaderModel::shaderProgram() const
 
 void ShaderModel::syncModel()
 {
+    if(m_shaderProgram == nullptr) return;
     QOpenGLDebugLogger logger;
 
 
@@ -61,7 +72,7 @@ void ShaderModel::syncModel()
 //        disabledMessages.push_back(131184);
 //        logger.disableMessages(disabledMessages);
     }
-    this->clear();
+    //this->clear();
     // QOpenGLShaderProgram is not part of Qt3D.
     // It allows to parse the shader.
     QOpenGLShaderProgram shaderProgram;
@@ -113,19 +124,33 @@ void ShaderModel::syncModel()
         }
 
         ShaderParameterInfo *theUniform;
+        QStandardItem *csi;
         if(m_parameters.contains(name))
         {
             theUniform = m_parameters.value(name);
+            bool found = false;
+            for(int i=0 ; i<rowCount() ; ++i)
+            {
+                csi = item(i, 0);
+                if(csi->data(ParameterName).toString() == name)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            Q_ASSERT(found);
         }
         else
         {
-            theUniform = m_parameters.value(name, new ShaderParameterInfo(this));
+            theUniform = new ShaderParameterInfo(this);
+            m_parameters.insert(name, theUniform );
+            csi = new QStandardItem();
+            this->appendRow( csi );
         }
         theUniform->setName( name );
         theUniform->setType( ShaderParameterInfo::Uniform );
         theUniform->setDatatype( static_cast<ShaderParameterInfo::ShaderParameterDatatype>(type) );
         theUniform->setUniformLocation( location );
-        QStandardItem *csi = new QStandardItem();
         csi->setData(theUniform->name(), ParameterName);
         csi->setData(QVariant::fromValue(theUniform->type()), ParameterType);
         csi->setData(QVariant::fromValue(theUniform->datatype()), ParameterDatatype);
@@ -134,7 +159,6 @@ void ShaderModel::syncModel()
         csi->setData(theUniform->uniformLocation(), ParameterUniformLocation);
         csi->setData(theUniform->isSubroutine(), ParameterIsSubroutine);
         csi->setData(theUniform->subroutineValues(), ParameterSubroutineValues);
-        this->appendRow( csi );
     }
     shaderProgram.release();
     dummySurface.destroy();
@@ -151,7 +175,10 @@ void ShaderModel::setShaderProgram(Qt3DRender::QShaderProgram *shaderProgram)
         return;
 
     m_shaderProgram = shaderProgram;
-    syncModel();
+    if(m_shaderProgram->vertexShaderCode().length() != 0 || m_shaderProgram->fragmentShaderCode().length())
+    {
+        syncModel();
+    }
     Q_EMIT shaderProgramChanged(m_shaderProgram);
 }
 

@@ -6,86 +6,142 @@ import QtQml 2.2
 import fhac 1.0
 Item {
     id: root
+    // For usage in a TableView. This needs styleData
     property alias autoSelectComponent: autoSelectComponent
     readonly property var parameters: []
     property var target
     property string parametersProperty: "parameters"
 
-    signal parametersChanging()
-    signal parametersChangedFinished()
-    Item {
-        id: priv
-        Instantiator {
-            id: parameterInstantiator
-            property int numberOfEditableParameters: 0
-            Parameter {
-                property bool initialized: false
-            }
-            onObjectAdded: root.parameters.push(object)
-            onObjectRemoved: {
-                var index = array.indexOf(object)
-                if( index === -1 )
-                    console.log("Removed non existent object, must never happen")
-                root.parameters.splice(index, 1)
+    function heightOfType(datatype, isSubroutine) {
+        if(!datatype) return
+        if( isSubroutine ) {
+
+        } else {
+            var singleHeight = 60;
+            switch(datatype.valueOf()) {
+                case ShaderParameterInfo.FLOAT:
+                case ShaderParameterInfo.DOUBLE:
+                    return singleHeight;
+                case ShaderParameterInfo.FLOAT_VEC2:
+                    return singleHeight+singleHeight*0.5;
+                case ShaderParameterInfo.FLOAT_VEC3:
+                    return singleHeight+singleHeight*0.5*2;
+                case ShaderParameterInfo.FLOAT_VEC4:
+                    return singleHeight+singleHeight*0.5*3;
+                case ShaderParameterInfo.INT:
+                    return singleHeight;
+                case ShaderParameterInfo.BOOL:
+                    return singleHeight*0.5;
+                case ShaderParameterInfo.FLOAT_MAT4:
+                case ShaderParameterInfo.SAMPLER_2D:
+                default:
+                    return singleHeight;
             }
         }
+    }
 
-        function setParameter(name, value) {
-            if( isNaN(value)) return
+    signal beforeParameterChange()
+    signal afterParameterChange(string valueAsText)
+    signal parameterChange(string name, var value)
+    Item {
+        id: priv
+//        Instantiator {
+//            id: parameterInstantiator
+//            property int numberOfEditableParameters: 0
+//            Parameter {
+//                property bool initialized: false
+//            }
+//            onObjectAdded: root.parameters.push(object)
+//            onObjectRemoved: {
+//                var index = array.indexOf(object)
+//                if( index === -1 )
+//                    console.log("Removed non existent object, must never happen")
+//                root.parameters.splice(index, 1)
+//            }
+//        }
+        function setParameter(name, value, typename) {
+            if( typeof value === "number" && isNaN(value)) return
             if( value === undefined) return
             var listChanged = false
             var found = false
-            for (var i in root.parameters) {
-                if ( root.parameters[i].initialized
-                     && root.parameters[i].name === name ) {
-                    root.parameters[i].value = value
-                    console.log("DBG: set " + name + " " + value)
+            for (var i in root.target[root.parametersProperty]) {
+                if ( root.target[root.parametersProperty][i].name === name ) {
+                    root.target[root.parametersProperty][i].value = value
                     found = true
                     break;
                 }
             }
             if (!found) {
                 listChanged = true
-                parameterInstantiator.numberOfEditableParameters++;
-                found = false
-                for (var i in root.parameters) {
-                    if ( !root.parameters[i].initialized ) {
-                        root.parameters[i].name = name
-                        root.parameters[i].value = value
-                        console.log("DBG: added and set " + name + " " + value)
-                        root.parameters[i].initialized = true
-                        console.log("DBG: added #" + parameterInstantiator.numberOfEditableParameters)
-                        found = true
-                        break;
+                root.target[root.parametersProperty].push({"name": name, "value":value})
+//                found = false
+//                for (var i in root.target[root.parametersProperty]) {
+//                    if ( !root.parameters[i].initialized ) {
+//                        root.target[root.parametersProperty][i].name = name
+//                        root.target[root.parametersProperty][i].value = value
+//                        console.log("DBG: added and set " + name + " " + value)
+//                        root.parameters[i].initialized = true
+//                        console.log("DBG: added #" + parameterInstantiator.numberOfEditableParameters)
+//                        found = true
+//                        break;
+//                    }
+//                }
+//                if(!found) {
+//                    console.log("Error, could not add param")
+//                }
+            }
+            if(listChanged) {
+                root.beforeParameterChange();
+            }
+//            root.target[root.parametersProperty] = []
+//            console.log("DBG: 1")
+//            root.target[root.parametersProperty] = root.target[root.parametersProperty]
+            if(listChanged) {
+                var valueAsText;
+                if(typename) {
+                    switch(typename) {
+                        case "double":
+                            valueAsText =  value
+                            break;
+                        case "int":
+                            valueAsText =  value
+                            break;
+                        case "bool":
+                            valueAsText =  value
+                            break;
+                        case "QVector2D":
+                            valueAsText =  "Qt.vector2d(" + value.r + "," + value.g + ")"
+                            break;
+                        case "QVector3D":
+                            valueAsText =  "Qt.vector3d(" + value.r + "," + value.g + "," + value.b +")"
+                            break;
+                        case "QVector4D":
+                            valueAsText =  "Qt.vector4d(" + value.r + "," + value.g + "," + value.b + ","+ value.a + ")"
+                            break;
+                        default:
+                            valueAsText = "0"
+                            console.log("WARN: please add a standard type to ShaderUniformDelegate for " + typename)
                     }
+                } else {
+                    valueAsText = "0"
                 }
-                if(!found) {
-                    console.log("Error, could not add param")
-                }
+                root.afterParameterChange(valueAsText)
             }
-            if(listChanged) {
-                console.log("DBG: before");
-                root.parametersChanging();
-            }
-            root.target[root.parametersProperty] = [];
-            console.log("DBG: 1");
-            root.target[root.parametersProperty] = root.parameters;
-            if(listChanged) {
-                console.log("DBG: 2");
-                root.parametersChangedFinished();
-            }
+            parameterChange(name, value)
         }
     }
 
     Component {
         id: autoSelectComponent
         Item {
+            anchors.fill: parent
             id: item
+            clip: true
             Component.onCompleted: {
+                //styleData comes from TableView
                 if( styleData.value.isSubroutine ) {
                     subroutineChooser.createObject(item, styleData.value)
                 } else {
-
                     switch(styleData.value.datatype.valueOf()) {
                         case ShaderParameterInfo.FLOAT:
                         case ShaderParameterInfo.DOUBLE:
@@ -122,7 +178,7 @@ Item {
     }
 
     Component {
-        id:subroutineChooser
+        id: subroutineChooser
         ColumnLayout {
             id:comp
             property var uniform
@@ -146,7 +202,7 @@ Item {
                 }
             }
             Label {
-                text: uniform.name + ":"
+                text: name + ":"
                 font.capitalization: Font.Capitalize
             }
             ComboBox {
@@ -163,117 +219,40 @@ Item {
     }
 
     Component {
-        id:defaultFloatSlider
-        ColumnLayout {
-            id:comp
-            property bool isInt
+        id: defaultFloatSlider
+        MinMaxSlider {
+            anchors.fill: parent
             property string name
-            Label {
-                text: name + ":"
-                font.capitalization: Font.Capitalize
-            }
-            Slider {
-                id:valueSlider
-                minimumValue: parseFloat(minVal.text)
-                maximumValue: parseFloat(maxVal.text)
-                stepSize: isInt ? 1.0 : 0.0
-                onValueChanged: {
-                    priv.setParameter(name, value);
-                }
-            }
-            RowLayout {
-                Label {
-                    text: "Min:"
-                }
-                TextField {
-                    id: minVal
-                    validator: DoubleValidator {}
-                    Layout.maximumWidth: 60
-                }
-                Label {
-                    text: "Max:"
-                }
-                TextField {
-                    id: maxVal
-                    validator: DoubleValidator {}
-                    Layout.maximumWidth: 60
-                }
+            property string qmlTypename
+            onValueChanged: {
+                priv.setParameter(name, value, qmlTypename);
             }
         }
     }
 
     Component {
-        id:defaultVec2Control
+        id: defaultVec2Control
         ColumnLayout {
-            id:comp
-            property var uniform
-            property bool loading
-            Component.onCompleted: {
-                comp.loading = true;
-                if(uniform.initialized) {
-                    minVal.text = uniform.min;
-                    maxVal.text = uniform.max;
-                    valueSliderx.value = uniform.value.x;
-                    valueSlidery.value = uniform.value.y;
-                } else {
-                    minVal.text = 0.0;
-                    maxVal.text = 1.0;
-                    valueSliderx.value = 0.2;
-                    valueSlidery.value = 0.8;
-                    updateUniform();
-                    uniform.initialized = true;
-                }
-                comp.loading = false;
-            }
+            id: comp
+            property string name
+            property bool isInt
+            property string qmlTypename
             function updateUniform() {
-                uniform.value = Qt.vector2d(valueSliderx.value,
-                                            valueSlidery.value);
+                priv.setParameter(name, Qt.vector2d(valueSliderx.value,
+                                                    valueSlidery.value), qmlTypename);
             }
-            Label {
-                text: uniform.name + ":"
-                font.capitalization: Font.Capitalize
+            MinMaxSlider {
+                id: valueSliderx
+                isInt: comp.isInt
+                minMaxEditable: false
+                min: valueSlidery.min
+                max: valueSlidery.max
+                onValueChanged: updateUniform()
             }
-            Slider {
-                id:valueSliderx
-                minimumValue: uniform.min
-                maximumValue: uniform.max
-                onValueChanged: if(!comp.loading) updateUniform();
-            }
-            Slider {
-                id:valueSlidery
-                minimumValue: uniform.min
-                maximumValue: uniform.max
-                onValueChanged: if(!comp.loading) updateUniform();
-            }
-            RowLayout {
-                Label {
-                    text: "Min:"
-                }
-                TextField {
-                    id:minVal
-                    validator: DoubleValidator {}
-                    Layout.maximumWidth: 60
-                    Binding {
-                        when: comp.loading === false;
-                        target: uniform
-                        property: "min"
-                        value: minVal.text
-                    }
-                }
-                Label {
-                    text: "Max:"
-                }
-                TextField {
-                    id:maxVal
-                    validator: DoubleValidator {}
-                    Layout.maximumWidth: 60
-                    Binding {
-                        when: comp.loading === false;
-                        target: uniform
-                        property: "max"
-                        value: maxVal.text
-                    }
-                }
+            MinMaxSlider {
+                id: valueSlidery
+                isInt: comp.isInt
+                onValueChanged: updateUniform()
             }
         }
     }
@@ -281,200 +260,94 @@ Item {
     Component {
         id:defaultVec3Control
         ColumnLayout {
-            id:comp
-            property var uniform
-            property bool loading
-            Component.onCompleted: {
-                comp.loading = true;
-                if(uniform.initialized) {
-                    minVal.text = uniform.min;
-                    maxVal.text = uniform.max;
-                    valueSliderx.value = uniform.value.x;
-                    valueSlidery.value = uniform.value.y;
-                    valueSliderz.value = uniform.value.z;
-                } else {
-                    minVal.text = 0.0;
-                    maxVal.text = 1.0;
-                    valueSliderx.value = 0.0;
-                    valueSlidery.value = 0.5;
-                    valueSliderz.value = 1.0;
-                    updateUniform();
-                    uniform.initialized = true;
-                }
-                comp.loading = false;
-            }
+            id: comp
+            anchors.left: parent.left
+            anchors.right: parent.right
+            property string name
+            property bool isInt
+            property string qmlTypename
             function updateUniform() {
-                uniform.value = Qt.vector3d(valueSliderx.value,
-                                            valueSlidery.value,
-                                            valueSliderz.value);
+                priv.setParameter(name, Qt.vector3d(valueSliderx.value,
+                                                    valueSlidery.value,
+                                                    valueSliderz.value), qmlTypename);
             }
-            Label {
-                text: uniform.name + ":"
-                font.capitalization: Font.Capitalize
-            }
-            Slider {
+            MinMaxSlider {
+                Layout.fillWidth: true
                 id:valueSliderx
-                minimumValue: uniform.min
-                maximumValue: uniform.max
-                onValueChanged: if(!comp.loading) updateUniform();
+                isInt: comp.isInt
+                minMaxEditable: false
+                min: valueSliderz.min
+                max: valueSliderz.max
+                onValueChanged: updateUniform()
             }
-            Slider {
+            MinMaxSlider {
                 id:valueSlidery
-                minimumValue: uniform.min
-                maximumValue: uniform.max
-                onValueChanged: if(!comp.loading) updateUniform();
+                isInt: comp.isInt
+                minMaxEditable: false
+                min: valueSliderz.min
+                max: valueSliderz.max
+                onValueChanged: updateUniform()
             }
-            Slider {
+            MinMaxSlider {
                 id:valueSliderz
-                minimumValue: uniform.min
-                maximumValue: uniform.max
-                onValueChanged: if(!comp.loading) updateUniform();
-            }
-            RowLayout {
-                Label {
-                    text: "Min:"
-                }
-                TextField {
-                    id:minVal
-                    validator: DoubleValidator {}
-                    Layout.maximumWidth: 60
-                    Binding {
-                        when: comp.loading === false;
-                        target: uniform
-                        property: "min"
-                        value: minVal.text
-                    }
-                }
-                Label {
-                    text: "Max:"
-                }
-                TextField {
-                    id:maxVal
-                    validator: DoubleValidator {}
-                    Layout.maximumWidth: 60
-                    Binding {
-                        when: comp.loading === false;
-                        target: uniform
-                        property: "max"
-                        value: maxVal.text
-                    }
-                }
+                isInt: comp.isInt
+                onValueChanged: updateUniform()
             }
         }
     }
     Component {
         id:defaultVec4Control
         ColumnLayout {
-            id:comp
-            property var uniform
-            property bool loading
-            Component.onCompleted: {
-                comp.loading = true;
-                if(uniform.initialized) {
-                    minVal.text = uniform.min;
-                    maxVal.text = uniform.max;
-                    valueSliderx.value = uniform.value.x;
-                    valueSlidery.value = uniform.value.y;
-                    valueSliderz.value = uniform.value.z;
-                    valueSliderw.value = uniform.value.w;
-                } else {
-                    minVal.text = 0.0;
-                    maxVal.text = 1.0;
-                    valueSliderx.value = 0.9;
-                    valueSlidery.value = 0.8;
-                    valueSliderz.value = 0.8;
-                    valueSliderw.value = 1.0;
-                    updateUniform();
-                    uniform.initialized = true;
-                }
-                comp.loading = false;
-            }
+            id: comp
+            property string name
+            property bool isInt
+            property string qmlTypename
             function updateUniform() {
-                uniform.value = Qt.vector4d(valueSliderx.value,
-                                            valueSlidery.value,
-                                            valueSliderz.value,
-                                            valueSliderw.value);
+                priv.setParameter(name, Qt.vector4d(valueSliderx.value,
+                                                    valueSlidery.value,
+                                                    valueSliderz.value,
+                                                    valueSliderw.value), qmlTypename);
             }
-            Label {
-                text: uniform.name + ":"
-                font.capitalization: Font.Capitalize
-            }
-            Slider {
+            MinMaxSlider {
                 id:valueSliderx
-                minimumValue: uniform.min
-                maximumValue: uniform.max
-                onValueChanged: if(!comp.loading) updateUniform();
+                isInt: comp.isInt
+                minMaxEditable: false
+                min: valueSliderw.min
+                max: valueSliderw.max
+                onValueChanged: updateUniform()
             }
-            Slider {
+            MinMaxSlider {
                 id:valueSlidery
-                minimumValue: uniform.min
-                maximumValue: uniform.max
-                onValueChanged: if(!comp.loading) updateUniform();
+                isInt: comp.isInt
+                minMaxEditable: false
+                min: valueSliderw.min
+                max: valueSliderw.max
+                onValueChanged: updateUniform()
             }
-            Slider {
+            MinMaxSlider {
                 id:valueSliderz
-                minimumValue: uniform.min
-                maximumValue: uniform.max
-                onValueChanged: if(!comp.loading) updateUniform();
+                isInt: comp.isInt
+                minMaxEditable: false
+                min: valueSliderw.min
+                max: valueSliderw.max
+                onValueChanged: updateUniform()
             }
-            Slider {
+            MinMaxSlider {
                 id:valueSliderw
-                minimumValue: uniform.min
-                maximumValue: uniform.max
-                onValueChanged: if(!comp.loading) updateUniform();
-            }
-            RowLayout {
-                Label {
-                    text: "Min:"
-                }
-                TextField {
-                    id:minVal
-                    validator: DoubleValidator {}
-                    Layout.maximumWidth: 60
-                    Binding {
-                        when: comp.loading === false;
-                        target: uniform
-                        property: "min"
-                        value: minVal.text
-                    }
-                }
-                Label {
-                    text: "Max:"
-                }
-                TextField {
-                    id:maxVal
-                    validator: DoubleValidator {}
-                    Layout.maximumWidth: 60
-                    Binding {
-                        when: comp.loading === false;
-                        target: uniform
-                        property: "max"
-                        value: maxVal.text
-                    }
-                }
+                isInt: comp.isInt
+                onValueChanged: updateUniform()
             }
         }
     }
 
     Component {
-        id:defaultBoolComponent
+        id: defaultBoolComponent
         CheckBox {
-            id:comp
-            property var uniform
-            property bool loading;
-            Component.onCompleted: {
-                if(uniform.initialized) {
-                    comp.loading = true;
-                    checked = uniform.value;
-                    comp.loading = false;
-                } else {
-                    checked = false;
-                    uniform.value = false;
-                    uniform.initialized = true;
-                }
-            }
+            id: comp
+            property string name
+            property string qmlTypename
             onCheckedChanged: {
-                uniform.value = checked;
+                priv.setParameter(name, checked, qmlTypename);
             }
         }
     }
@@ -484,7 +357,7 @@ Item {
         GroupBox {
             property var datatype
             Text {
-                text: "(unsupported in Gui<br>Type: (<b>" + datatype.toString() + "</b>)\n"
+                text: "(unsupported in Gui)"
                 wrapMode: Text.WordWrap
                 textFormat: Text.RichText
             }

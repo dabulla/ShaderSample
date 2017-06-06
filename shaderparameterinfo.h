@@ -13,6 +13,7 @@ class ShaderParameterInfo : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QString qmlTypename READ qmlTypename NOTIFY qmlTypenameChanged)
     Q_PROPERTY(QVariant type READ type NOTIFY typeChanged)
     Q_PROPERTY(QVariant datatype READ datatype NOTIFY datatypeChanged)
     Q_PROPERTY(int uniformLocation READ uniformLocation NOTIFY uniformLocationChanged)
@@ -147,7 +148,9 @@ public:
     bool isSubroutine() const;
     QStringList subroutineValues() const;
 
-    QVariant::Type fromGLDatatype(ShaderParameterDatatype type);
+    QVariant::Type fromGLDatatype(ShaderParameterDatatype type) const;
+    QString qmlTypename() const;
+
 public slots:
     void setName(QString name);
     void setType(ShaderParameterType type);
@@ -163,6 +166,7 @@ signals:
     void uniformLocationChanged(int uniformLocation);
     void isSubroutineChanged(bool isSubroutine);
     void subroutineValuesChanged(QStringList subroutineValues);
+    void qmlTypenameChanged(QString qmlTypename);
 
 private:
     QString m_name;
