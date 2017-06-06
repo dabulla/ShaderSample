@@ -16,10 +16,21 @@ Item {
         anchors.fill: parent
         ColumnLayout {
             width: 400
-            Button {
-                Layout.fillWidth: true
-                text: "Reload"
-                onClicked: shaderModel.syncModel()
+            RowLayout {
+                Button {
+                    Layout.fillWidth: true
+                    text: "Settings"
+                    Settings {
+                        id: settings
+                    }
+                    onClicked: settings.open()
+                }
+
+                Button {
+                    Layout.fillWidth: true
+                    text: "Reload"
+                    onClicked: shaderModel.syncModel()
+                }
             }
 
             TreeView {
@@ -30,9 +41,15 @@ Item {
                     id: shaderModel
                     shaderProgram: ShaderProgram {
                         id: shaderProg
-                        vertexShaderCode: loadSource("qrc:/shader/pointcloud.vert")
+                        vertexShaderCode: loadSource(settings.settings.vertexShaderFilename)
                         onVertexShaderCodeChanged: shaderModel.syncModel()
-                        fragmentShaderCode: loadSource("qrc:/shader/pointcloud.frag")
+                        geometryShaderCode: loadSource(settings.settings.geometryShaderFilename)
+                        onGeometryShaderCodeChanged: shaderModel.syncModel()
+                        tessellationControlShaderCode: loadSource(settings.settings.tesselationControlShaderFilename)
+                        onTessellationControlShaderCodeChanged: shaderModel.syncModel()
+                        tessellationEvaluationShaderCode: loadSource(settings.settings.tesselationEvaluationShaderFilename)
+                        onTessellationEvaluationShaderCodeChanged: shaderModel.syncModel()
+                        fragmentShaderCode: loadSource(settings.settings.fragmentShaderFilename)
                         onFragmentShaderCodeChanged: shaderModel.syncModel()
                     }
                 }
@@ -47,6 +64,7 @@ Item {
                 }
 
                 TableViewColumn {
+                    id: colName
                     role: "name"
                     title: "name"
                     width: 60
@@ -58,6 +76,7 @@ Item {
                     }
                 }
                 TableViewColumn {
+                    id: colType
                     role: "type"
                     title: "type"
                     width: 50
@@ -69,6 +88,7 @@ Item {
                     }
                 }
                 TableViewColumn {
+                    id: colDatatype
                     role: "datatype"
                     title: "datatype"
                     width: 60
@@ -81,7 +101,12 @@ Item {
                 TableViewColumn {
                     role: "data"
                     title: "data"
-                    resizable: true
+                    resizable: false
+                    width: treeViewShaderVariables.width
+                           - colName.width
+                           - colType.width
+                           - colDatatype.width
+                           - 3
                     delegate: delegateManager.autoSelectComponent
                 }
             }
@@ -89,11 +114,6 @@ Item {
                 property var params: []
                 property var currentScene
                 id: delegateManager
-                target: delegateManager
-                parametersProperty: "params"
-                onBeforeParameterChange: {
-                    sceneParent.children = ""
-                }
                 onParameterChange: {
                     if(currentScene) {
                         for (var i in currentScene.parameters) {
@@ -104,14 +124,15 @@ Item {
                     }
                 }
 
-                onAfterParameterChange: {
+                onParameterAddedOrRemoved: {
+                    sceneParent.children = ""
                     var paramsString = "parameters: ["
-                    for(var i=0 ; i < params.length-1 ; i++) {
-                        paramsString += "Parameter { name:\"" + params[i].name + "\"; value: " + valueAsText + " },"
+                    for(var i=0 ; i < parameters.length-1 ; i++) {
+                        paramsString += "Parameter { name:\"" + parameters[i].name + "\"; value: " + parameters[i].initialValueAsText + " },"
                     }
-                    paramsString += "Parameter { name:\"" + params[params.length-1].name + "\"; value: " + valueAsText + " }]"
+                    paramsString += "Parameter { name:\"" + parameters[parameters.length-1].name + "\"; value: " + parameters[i].initialValueAsText + " }]"
                     var sampleSceneWithParams = sceneTemplate.replace("/*${PARAMETERS}*/", paramsString)
-                    delegateManager.currentScene = Qt.createQmlObject(sampleSceneWithParams, sceneParent)
+                    delegateManager.currentScene = Qt.createQmlObject(sampleSceneWithParams, sceneParent)//, {"shaderProgram":shaderModel.shaderProgram})
                 }
             }
         }

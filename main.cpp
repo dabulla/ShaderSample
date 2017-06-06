@@ -1,20 +1,15 @@
 #include <QGuiApplication>
 #include <QQuickView>
-#include "shadermodel.h"
-#include <QOpenGLDebugLogger>
 #include <QQmlContext>
+#include "shadermodel.h"
+#include "helper.h"
 
-QString readFile(QString filename){
-    QFile file(filename);
-
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        qDebug() << "could not open file for read";
-        return "";
-    }
-    QTextStream in(&file);
-    QString text = in.readAll();
-    file.close();
-    return text;
+static Helper* helper;
+QObject *provider(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+    Q_UNUSED(engine)
+    Q_UNUSED(scriptEngine)
+    return helper;
 }
 
 int main(int argc, char **argv)
@@ -24,8 +19,10 @@ int main(int argc, char **argv)
     QQuickView view;
     qmlRegisterType<ShaderModel>("fhac", 1, 0, "ShaderModel");
     qmlRegisterType<ShaderParameterInfo>("fhac", 1, 0, "ShaderParameterInfo");
+    helper = new Helper(&view);
+    qmlRegisterSingletonType<Helper>("fhac", 1, 0, "Helper", provider);
 
-    view.rootContext()->setContextProperty("sceneTemplate", readFile(":/SampleScene.qml"));
+    view.rootContext()->setContextProperty("sceneTemplate", helper->readFile(":/SampleScene.qml"));
     view.resize(500, 500);
     view.setResizeMode(QQuickView::SizeRootObjectToView);
     view.setSource(QUrl("qrc:/main.qml"));

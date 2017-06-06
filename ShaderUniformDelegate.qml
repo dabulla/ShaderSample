@@ -9,7 +9,7 @@ Item {
     // For usage in a TableView. This needs styleData
     property alias autoSelectComponent: autoSelectComponent
     readonly property var parameters: []
-    property var target
+    property var target: root
     property string parametersProperty: "parameters"
 
     function heightOfType(datatype, isSubroutine) {
@@ -35,34 +35,18 @@ Item {
                 case ShaderParameterInfo.FLOAT_MAT4:
                 case ShaderParameterInfo.SAMPLER_2D:
                 default:
-                    return singleHeight;
+                    return singleHeight*0.6;
             }
         }
     }
 
-    signal beforeParameterChange()
-    signal afterParameterChange(string valueAsText)
+    signal parameterAddedOrRemoved()
     signal parameterChange(string name, var value)
     Item {
         id: priv
-//        Instantiator {
-//            id: parameterInstantiator
-//            property int numberOfEditableParameters: 0
-//            Parameter {
-//                property bool initialized: false
-//            }
-//            onObjectAdded: root.parameters.push(object)
-//            onObjectRemoved: {
-//                var index = array.indexOf(object)
-//                if( index === -1 )
-//                    console.log("Removed non existent object, must never happen")
-//                root.parameters.splice(index, 1)
-//            }
-//        }
         function setParameter(name, value, typename) {
             if( typeof value === "number" && isNaN(value)) return
             if( value === undefined) return
-            var listChanged = false
             var found = false
             for (var i in root.target[root.parametersProperty]) {
                 if ( root.target[root.parametersProperty][i].name === name ) {
@@ -72,31 +56,6 @@ Item {
                 }
             }
             if (!found) {
-                listChanged = true
-                root.target[root.parametersProperty].push({"name": name, "value":value})
-//                found = false
-//                for (var i in root.target[root.parametersProperty]) {
-//                    if ( !root.parameters[i].initialized ) {
-//                        root.target[root.parametersProperty][i].name = name
-//                        root.target[root.parametersProperty][i].value = value
-//                        console.log("DBG: added and set " + name + " " + value)
-//                        root.parameters[i].initialized = true
-//                        console.log("DBG: added #" + parameterInstantiator.numberOfEditableParameters)
-//                        found = true
-//                        break;
-//                    }
-//                }
-//                if(!found) {
-//                    console.log("Error, could not add param")
-//                }
-            }
-            if(listChanged) {
-                root.beforeParameterChange();
-            }
-//            root.target[root.parametersProperty] = []
-//            console.log("DBG: 1")
-//            root.target[root.parametersProperty] = root.target[root.parametersProperty]
-            if(listChanged) {
                 var valueAsText;
                 if(typename) {
                     switch(typename) {
@@ -125,9 +84,11 @@ Item {
                 } else {
                     valueAsText = "0"
                 }
-                root.afterParameterChange(valueAsText)
+                root.target[root.parametersProperty].push({"name": name, "value": value, "initialValueAsText": valueAsText })
+                root.parameterAddedOrRemoved()
+            } else {
+                root.parameterChange(name, value)
             }
-            parameterChange(name, value)
         }
     }
 
@@ -224,9 +185,8 @@ Item {
             anchors.fill: parent
             property string name
             property string qmlTypename
-            onValueChanged: {
-                priv.setParameter(name, value, qmlTypename);
-            }
+            Component.onCompleted: priv.setParameter(name, value, qmlTypename);
+            onValueChanged: priv.setParameter(name, value, qmlTypename);
         }
     }
 
@@ -237,6 +197,7 @@ Item {
             property string name
             property bool isInt
             property string qmlTypename
+            Component.onCompleted: updateUniform();
             function updateUniform() {
                 priv.setParameter(name, Qt.vector2d(valueSliderx.value,
                                                     valueSlidery.value), qmlTypename);
@@ -266,6 +227,7 @@ Item {
             property string name
             property bool isInt
             property string qmlTypename
+            Component.onCompleted: updateUniform();
             function updateUniform() {
                 priv.setParameter(name, Qt.vector3d(valueSliderx.value,
                                                     valueSlidery.value,
@@ -302,6 +264,7 @@ Item {
             property string name
             property bool isInt
             property string qmlTypename
+            Component.onCompleted: updateUniform();
             function updateUniform() {
                 priv.setParameter(name, Qt.vector4d(valueSliderx.value,
                                                     valueSlidery.value,
@@ -346,15 +309,16 @@ Item {
             id: comp
             property string name
             property string qmlTypename
-            onCheckedChanged: {
-                priv.setParameter(name, checked, qmlTypename);
-            }
+            Component.onCompleted: priv.setParameter(name, checked, qmlTypename);
+            onCheckedChanged: priv.setParameter(name, checked, qmlTypename);
         }
     }
 
     Component {
-        id:notAvaliableComponent
+        id: notAvaliableComponent
         GroupBox {
+            anchors.left: parent.left
+            anchors.right: parent.right
             property var datatype
             Text {
                 text: "(unsupported in Gui)"

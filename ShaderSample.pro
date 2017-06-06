@@ -7,9 +7,13 @@ CONFIG += c++11
 
 SOURCES += main.cpp \
     shadermodel.cpp \
-    shaderparameterinfo.cpp
+    shaderparameterinfo.cpp \
+    helper.cpp
 
 RESOURCES += qml.qrc
+
+OTHER_FILES += shader/pointcloud.frag \
+               shader/pointcloud.vert
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
@@ -35,4 +39,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     shadermodel.h \
-    shaderparameterinfo.h
+    shaderparameterinfo.h \
+    helper.h

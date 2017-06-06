@@ -6,5 +6,6 @@
         <file>ShaderUniformDelegate.qml</file>
         <file>SampleScene.qml</file>
         <file>MinMaxSlider.qml</file>
+        <file>Settings.qml</file>
     </qresource>
 </RCC>
