@@ -151,6 +151,7 @@ public:
     QVariant::Type fromGLDatatype(ShaderParameterDatatype type) const;
     QString qmlTypename() const;
 
+    QStringList m_subroutineValues;
 public slots:
     void setName(QString name);
     void setType(ShaderParameterType type);
@@ -175,7 +176,6 @@ private:
     QVariant    m_value;
     int         m_uniformLocation;
     bool        m_isSubroutine;
-    QStringList m_subroutineValues;
 };
 
 Q_DECLARE_METATYPE(ShaderParameterInfo)

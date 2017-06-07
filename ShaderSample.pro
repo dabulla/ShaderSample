@@ -12,8 +12,17 @@ SOURCES += main.cpp \
 
 RESOURCES += qml.qrc
 
-OTHER_FILES += shader/pointcloud.frag \
-               shader/pointcloud.vert
+OTHER_FILES += shader/*.frag \
+               shader/*.vert \
+               shader/*.geom \
+               shader/*.comp \
+               shader/*.tcs \
+               shader/*.tes \
+               shader/*.vs \
+               shader/*.fs \
+               shader/*.gs \
+               shader/*.cs \
+               shader/*.glsl \
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =

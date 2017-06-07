@@ -1,6 +1,8 @@
 #include <QGuiApplication>
-#include <QQuickView>
+#include <QQmlEngine>
+#include <QQmlComponent>
 #include <QQmlContext>
+#include <QDebug>
 #include "shadermodel.h"
 #include "helper.h"
 
@@ -19,17 +21,26 @@ int main(int argc, char **argv)
     app.setOrganizationDomain("fh-aachen.de");
     app.setApplicationName("Shader Inspector");
 
-    QQuickView view;
+
+    QQmlEngine engine;
+    QQmlComponent component(&engine);
+
     qmlRegisterType<ShaderModel>("fhac", 1, 0, "ShaderModel");
     qmlRegisterType<ShaderParameterInfo>("fhac", 1, 0, "ShaderParameterInfo");
-    helper = new Helper(&view);
+    helper = new Helper(&engine);
     qmlRegisterSingletonType<Helper>("fhac", 1, 0, "Helper", provider);
+    engine.rootContext()->setContextProperty("sceneTemplate", helper->readFile(":/SampleScene.qml"));
 
-    view.rootContext()->setContextProperty("sceneTemplate", helper->readFile(":/SampleScene.qml"));
-    view.resize(500, 500);
-    view.setResizeMode(QQuickView::SizeRootObjectToView);
-    view.setSource(QUrl("qrc:/main.qml"));
-    view.show();
+    component.loadUrl(QUrl("qrc:/main.qml"));
+    if ( component.isReady() )
+        component.create();
+    else
+        qWarning() << component.errorString();
+//    QQuickView view;
+//    view.resize(500, 500);
+//    view.setResizeMode(QQuickView::SizeRootObjectToView);
+//    view.setSource(QUrl("qrc:/main.qml"));
+//    view.show();
 
     return app.exec();
 }

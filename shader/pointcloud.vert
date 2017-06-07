@@ -21,6 +21,7 @@ uniform bool negative;
 uniform int mode;
 uniform vec2 vector2;
 uniform vec4 vector4;
+//uniform vec3 color2;
 
 void main()
 {
@@ -48,5 +49,5 @@ void main()
         modeColor.rgb = vector4.rgb;
         modeColor.rgb *= vector4.a;
     }
-    color = modeColor * multi;
+    color = modeColor * multi;// * color2;
 }

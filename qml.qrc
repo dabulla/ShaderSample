@@ -3,9 +3,14 @@
         <file>main.qml</file>
         <file>shader/pointcloud.frag</file>
         <file>shader/pointcloud.vert</file>
-        <file>ShaderUniformDelegate.qml</file>
+        <file>ShaderUniformDelegateManager.qml</file>
         <file>SampleScene.qml</file>
         <file>MinMaxSlider.qml</file>
         <file>Settings.qml</file>
+        <file>HelperGridMesh.qml</file>
+        <file>textures/75692-diffuse.jpg</file>
+        <file>textures/75692-height.png</file>
+        <file>textures/75692-normal.jpg</file>
+        <file>textures/75692-specular.png</file>
     </qresource>
 </RCC>

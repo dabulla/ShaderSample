@@ -165,6 +165,7 @@ void ShaderModel::syncModel()
         theUniform->setType( ShaderParameterInfo::Uniform );
         theUniform->setDatatype( static_cast<ShaderParameterInfo::ShaderParameterDatatype>(type) );
         theUniform->setUniformLocation( location );
+        theUniform->setIsSubroutine( false );
         csi->setData(theUniform->name(), ParameterName);
         csi->setData(QVariant::fromValue(theUniform->type()), ParameterType);
         csi->setData(QVariant::fromValue(theUniform->datatype()), ParameterDatatype);
@@ -173,6 +174,95 @@ void ShaderModel::syncModel()
         csi->setData(theUniform->uniformLocation(), ParameterUniformLocation);
         csi->setData(theUniform->isSubroutine(), ParameterIsSubroutine);
         csi->setData(theUniform->subroutineValues(), ParameterSubroutineValues);
+    }
+    /// Subroutines are special...
+    /// Subroutines can be different for each shader stage
+    total = -1;
+    int shaderStages[] = {GL_VERTEX_SHADER,
+                          GL_TESS_CONTROL_SHADER,
+                          GL_TESS_EVALUATION_SHADER,
+                          GL_GEOMETRY_SHADER,
+                          GL_FRAGMENT_SHADER,
+                          GL_COMPUTE_SHADER};
+    for(unsigned int shaderStageIndex=0 ; shaderStageIndex<sizeof(shaderStages)/sizeof(shaderStages[0]) ; ++shaderStageIndex)
+    {
+        int shaderStage = shaderStages[shaderStageIndex];
+
+        QList<QString> subroutineNames;
+
+        glFuncs->glGetProgramStageiv(shaderProgram.programId(), shaderStage, GL_ACTIVE_SUBROUTINES, &total);
+        for(int i=0; i<total; ++i)
+        {
+            int name_len=-1;
+            char nameBuff[200];
+            glFuncs->glGetActiveSubroutineName(shaderProgram.programId(), shaderStage, GLuint(i), 200, &name_len, nameBuff);
+            nameBuff[name_len] = 0;
+            subroutineNames.append( nameBuff );
+        }
+
+        //m_qmlShaderProperties.m_subroutines[ shaderStage ].clear();
+        glFuncs->glGetProgramStageiv(shaderProgram.programId(), shaderStage, GL_ACTIVE_SUBROUTINE_UNIFORMS, &total);
+        for(int i=0; i<total; ++i)
+        {
+            int name_len=-1;
+            char nameBuff[200];
+            GLint num_subroutines;
+            int subroutines[100];
+            glFuncs->glGetActiveSubroutineUniformiv(shaderProgram.programId(), shaderStage, GLuint(i), GL_NUM_COMPATIBLE_SUBROUTINES, &num_subroutines);
+            glFuncs->glGetActiveSubroutineUniformiv(shaderProgram.programId(), shaderStage, GLuint(i), GL_COMPATIBLE_SUBROUTINES, subroutines);
+            glFuncs->glGetActiveSubroutineUniformName(shaderProgram.programId(), shaderStage, GLuint(i), 200, &name_len, nameBuff);
+            nameBuff[name_len] = 0;
+            QString name(nameBuff);
+            if(m_blacklist.contains(name))
+            {
+                continue;
+            }
+            ShaderParameterInfo *theUniform;
+            QStandardItem *csi;
+            if(m_parameters.contains(name))
+            {
+                theUniform = m_parameters.value(name);
+                bool found = false;
+                for(int i=0 ; i<rowCount() ; ++i)
+                {
+                    csi = item(i, 0);
+                    if(csi->data(ParameterName).toString() == name)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                Q_ASSERT(found);
+            }
+            else
+            {
+                theUniform = new ShaderParameterInfo(this);
+                m_parameters.insert(name, theUniform );
+                csi = new QStandardItem();
+                this->appendRow( csi );
+            }
+
+            theUniform->setName( name );
+            theUniform->setType( ShaderParameterInfo::Uniform );
+            theUniform->setDatatype( static_cast<ShaderParameterInfo::ShaderParameterDatatype>(ShaderParameterInfo::UNSIGNED_INT) );
+            theUniform->setUniformLocation( i );
+            theUniform->setIsSubroutine( true );
+            //theUniform->set_subroutineShaderType( shaderStage );
+            theUniform->m_subroutineValues.clear();
+            for( int idx=0 ; idx < num_subroutines ; ++idx)
+            {
+                theUniform->m_subroutineValues.append(subroutineNames.at(subroutines[idx]));
+            }
+
+            csi->setData(theUniform->name(), ParameterName);
+            csi->setData(QVariant::fromValue(theUniform->type()), ParameterType);
+            csi->setData(QVariant::fromValue(theUniform->datatype()), ParameterDatatype);
+            csi->setData(QVariant::fromValue(theUniform), ParameterData);
+            //csi->setData(childFullPath, ParameterValue);
+            csi->setData(theUniform->uniformLocation(), ParameterUniformLocation);
+            csi->setData(theUniform->isSubroutine(), ParameterIsSubroutine);
+            csi->setData(theUniform->subroutineValues(), ParameterSubroutineValues);
+        }
     }
     shaderProgram.release();
     dummySurface.destroy();

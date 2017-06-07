@@ -4,16 +4,13 @@ import Qt3D.Render 2.0
 import Qt3D.Input 2.0
 import Qt3D.Extras 2.0
 import QtQuick.Scene3D 2.0
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.4
-import QtQml 2.2
 
 import fhac 1.0
 
 Scene3D {
-    // "C:/develop/ShaderSample/shader/pointcloud.frag"
-    property string vertexShader
-    property string fragmentShader
+    property string modelSource
+//    property string vertexShader
+//    property string fragmentShader
     // must be available to update parameters
     property alias parameters: renderPass1.parameters
     anchors.fill: parent
@@ -82,23 +79,50 @@ Scene3D {
                 techniques: [
                     Technique {
                         id: technique1
-//                                graphicsApiFilter {
-//                                    api: GraphicsApiFilter.OpenGL
-//                                    profile: GraphicsApiFilter.CoreProfile
-//                                    majorVersion: 3
-//                                    minorVersion: 1
-//                                }
+                        parameters: [ Parameter {
+                                name: "diffuseTex"
+                                value: Texture2D {
+                                    minificationFilter: Texture.LinearMipMapLinear
+                                    magnificationFilter: Texture.Linear
+                                    wrapMode {
+                                        x: WrapMode.Repeat
+                                        y: WrapMode.Repeat
+                                    }
+                                    generateMipMaps: true
+                                    maximumAnisotropy: 16.0
+                                    TextureImage {
+                                        source: "qrc:/textures/75692-diffuse.jpg"
+                                    }
+                                }
+                            },
+                            Parameter {
+                                name: "specularTex"
+                                value: Texture2D {
+                                    minificationFilter: Texture.LinearMipMapLinear
+                                    magnificationFilter: Texture.Linear
+                                    wrapMode {
+                                        x: WrapMode.Repeat
+                                        y: WrapMode.Repeat
+                                    }
+                                    generateMipMaps: true
+                                    maximumAnisotropy: 16.0
+                                    TextureImage {
+                                        source: "qrc:/textures/75692-specular.jpg"
+                                    }
+                                }
+                            }
+                        ]
                         renderPasses: [ RenderPass {
                             id: renderPass1
                             /*${PARAMETERS}*/
                             shaderProgram: ShaderProgram {
                                 id: shaderProg
-                                vertexShaderCode: Helper.readFile(/*${VS}*/)
-                                fragmentShaderCode: Helper.readFile(/*${FS}*/)
-                                geometryShaderCode: Helper.readFile(/*${GS}*/)
-                                tessellationControlShaderCode: Helper.readFile(/*${TCS}*/)
-                                tessellationEvaluationShaderCode: Helper.readFile(/*${TES}*/)
-                                computeShaderCode: Helper.readFile(/*${CS}*/)
+                                /*${VS}*/
+                                /*${FS}*/
+                                /*${GS}*/
+                                /*${TCS}*/
+                                /*${TES}*/
+                                /*${CS}*/
                             }
                             renderStates: [
                                 DepthTest { depthFunction: DepthTest.Less }
@@ -110,45 +134,42 @@ Scene3D {
 
         }
 
-        TorusMesh {
-            id: torusMesh
-            radius: 5
-            minorRadius: 1
-            rings: 100
-            slices: 20
+        HelperGridMesh {
+            id: gridMesh
         }
-
         Transform {
-            id: torusTransform
-            scale3D: Qt.vector3d(1.5, 1, 0.5)
-            rotation: fromAxisAndAngle(Qt.vector3d(1, 0, 0), 45)
+            id: gridTransform
+            matrix: {
+                var m = Qt.matrix4x4()
+                m.translate(Qt.vector3d(0, -5, 0));
+                return m;
+            }
         }
-
         Entity {
-            id: torusEntity
-            components: [ torusMesh, material, torusTransform ]
+            id: gridEntity
+            components: [ gridMesh, phong, gridTransform ]
         }
-
-        SphereMesh {
-            id: sphereMesh
-            radius: 3
+        Mesh {
+            id: mesh
+            source: "file://" + scene3d.modelSource
+            primitiveType: Mesh.Points
         }
-
         Transform {
-            id: sphereTransform
+            id: transform
             property real userAngle: 0.0
             matrix: {
-                var m = Qt.matrix4x4();
-                m.rotate(userAngle, Qt.vector3d(0, 1, 0));
-                m.translate(Qt.vector3d(2, 0, 0));
+                var m = Qt.matrix4x4()
+                m.rotate(userAngle, Qt.vector3d(0, 1, 0))
+                m.translate(Qt.vector3d(0, -10, 0));
+                m.scale(100.0)
                 return m;
             }
         }
 
         NumberAnimation {
-            target: sphereTransform
+            target: transform
             property: "userAngle"
-            duration: 1000
+            duration: 10000
             from: 0
             to: 360
 
@@ -157,8 +178,8 @@ Scene3D {
         }
 
         Entity {
-            id: sphereEntity
-            components: [ sphereMesh, phong, sphereTransform ]
+            id: entity
+            components: [ mesh, material, transform ]
         }
         PhongMaterial {
             id: phong

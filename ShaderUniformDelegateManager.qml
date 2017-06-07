@@ -14,10 +14,10 @@ Item {
 
     function heightOfType(datatype, isSubroutine) {
         if(!datatype) return
+        var singleHeight = 60;
         if( isSubroutine ) {
-
+            return singleHeight;
         } else {
-            var singleHeight = 60;
             switch(datatype.valueOf()) {
                 case ShaderParameterInfo.FLOAT:
                 case ShaderParameterInfo.DOUBLE:
@@ -37,6 +37,12 @@ Item {
                 default:
                     return singleHeight*0.6;
             }
+        }
+    }
+
+    function sync() {
+        for (var i in root.target[root.parametersProperty]) {
+            root.parameterChange(root.target[root.parametersProperty][i].name, root.target[root.parametersProperty][i].value)
         }
     }
 
@@ -64,7 +70,6 @@ Item {
                             break;
                         case "int":
                             valueAsText =  value.toFixed(0)
-                            console.log("DBG: " + valueAsText)
                             break;
                         case "bool":
                             valueAsText =  value
@@ -143,38 +148,20 @@ Item {
     Component {
         id: subroutineChooser
         ColumnLayout {
-            id:comp
-            property var uniform
-            property bool loading
-            property bool isInt
-            Component.onCompleted: {
-                var newModel = [];
-                for(var i = 0 ; i<uniform.subroutineValues.length ; ++i) {
-                    newModel.push({text:uniform.subroutineValues[i]});
-                }
-                subroutineCb.model = newModel;
-                if(uniform.initialized) {
-                    comp.loading = true;
-                    subroutineCb.currentIndex = uniform.subroutineValues.indexOf( uniform.value );
-                    comp.loading = false;
-                } else {
-                    comp.loading = true;
-                    subroutineCb.currentIndex = 0;
-                    comp.loading = false;
-                    uniform.initialized = true;
-                }
-            }
+            id: comp
+            property string name
+            property string qmlTypename
+            property var subroutineValues
             Label {
                 text: name + ":"
                 font.capitalization: Font.Capitalize
             }
             ComboBox {
-                id:subroutineCb
-                model: uniform.subroutineValues
+                id: subroutineCb
+                model: subroutineValues
                 onCurrentTextChanged: {
-                    if(! loading ) {
-                        uniform.value = currentText;
-                    }
+                    console.log("DBG: set:" + currentIndex)
+                    priv.setParameter(name, currentIndex, qmlTypename);
                 }
                 textRole: ""
             }
